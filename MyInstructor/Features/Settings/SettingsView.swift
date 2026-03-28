@@ -118,7 +118,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Account")
                 } footer: {
-                    Text("Deleting your account removes your public profile, community posts, and personal data. Instructors may retain lesson records for their analysis.")
+                    Text("Deleting your account will permanently remove your profile, community posts, and all associated personal data from our servers. This action cannot be undone.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 5)
