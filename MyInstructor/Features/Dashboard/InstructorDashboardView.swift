@@ -37,6 +37,8 @@ struct InstructorDashboardView: View {
     @State private var avgStudentProgress: Double = 0
     @State private var isLoading = true
     @State private var showGoalAlert = false
+    @State private var showPaywall = false
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
     
     var notificationCount: Int {
         let unreadAlerts = notificationManager.notifications.filter { !$0.isRead }.count
@@ -223,6 +225,15 @@ struct InstructorDashboardView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Enter your target earnings for the week.")
+            }
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+        .onChange(of: activeSheet) { newValue in
+            if newValue != nil && !subscriptionManager.isPro {
+                activeSheet = nil
+                showPaywall = true
             }
         }
     }

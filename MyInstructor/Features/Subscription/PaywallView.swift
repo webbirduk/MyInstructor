@@ -2,6 +2,7 @@ import SwiftUI
 import StoreKit
 
 struct PaywallView: View {
+    @Environment(\.dismiss) var dismiss
     @EnvironmentObject var subscriptionManager: SubscriptionManager
     @EnvironmentObject var authManager: AuthManager
     
@@ -18,6 +19,16 @@ struct PaywallView: View {
             
             VStack(spacing: 0) {
                 // MARK: - Header (Static on Blue)
+                HStack {
+                    Spacer()
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .padding()
+                }
+                
                 VStack(spacing: 10) {
                     Image(systemName: "crown.fill")
                         .resizable()

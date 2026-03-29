@@ -3,7 +3,11 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
     // Uses BackupManager.shared directly (Singleton)
+    
+    // Paywall State
+    @State private var showPaywall = false
     
     // App Preferences
     @State private var isLocationSharingEnabled = true
@@ -40,6 +44,20 @@ struct SettingsView: View {
                 
                 // MARK: - App Preferences
                 Section("Preferences") {
+                    if isInstructor && !subscriptionManager.isPro {
+                        Button {
+                            showPaywall = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "crown.fill")
+                                    .foregroundColor(.yellow)
+                                Text("Upgrade to Pro")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.primaryBlue)
+                            }
+                        }
+                    }
+                    
                     Toggle("Enable Live Location", isOn: $isLocationSharingEnabled)
                         .tint(.primaryBlue)
                         .onChange(of: isLocationSharingEnabled) { newValue in
@@ -125,6 +143,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showPaywall) {
+                PaywallView()
+            }
             .sheet(isPresented: $isPrivacyConsentShowing) {
                 PrivacyConsentPopup(isLocationSharingEnabled: $isLocationSharingEnabled)
             }

@@ -63,12 +63,8 @@ struct RootView: View {
         // 2. Instructors Check
         else if authManager.role == .instructor {
             // PRODUCTION LOGIC:
-            // Only allow access if 'isPro' is true.
-            if subscriptionManager.isPro {
-                MainTabView()
-            } else {
-                PaywallView()
-            }
+            // Allow access to the dashboard. The paywall will be shown internally as a sheet.
+            MainTabView()
         }
         // 3. Unselected or Error
         else {
@@ -120,21 +116,27 @@ struct SplashScreenView: View {
 // MARK: - Main Tab View (Container for Dashboards)
 struct MainTabView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var subscriptionManager: SubscriptionManager
+    @State private var showPaywall = false
     
     var body: some View {
         TabView {
             if authManager.role == .instructor {
                 // Instructor Tabs
                 InstructorDashboardView()
+                    .modifier(ProGuardOverlay(isPro: subscriptionManager.isPro, showPaywall: $showPaywall))
                     .tabItem { Label("Dashboard", systemImage: "house.fill") }
                 
                 InstructorCalendarView()
+                    .modifier(ProGuardOverlay(isPro: subscriptionManager.isPro, showPaywall: $showPaywall))
                     .tabItem { Label("Calendar", systemImage: "calendar") }
                 
                 CommunityFeedView()
+                    .modifier(ProGuardOverlay(isPro: subscriptionManager.isPro, showPaywall: $showPaywall))
                     .tabItem { Label("Broadcast", systemImage: "megaphone.fill") }
                 
                 StudentsListView()
+                    .modifier(ProGuardOverlay(isPro: subscriptionManager.isPro, showPaywall: $showPaywall))
                     .tabItem { Label("Students", systemImage: "person.2.fill") }
                 
                 SettingsView()
@@ -177,6 +179,30 @@ struct MainTabView: View {
                     .buttonStyle(.primaryDrivingApp)
                     .padding()
                 }
+            } // closes else block
+        } // closes TabView
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+    } // closes body
+} // closes struct
+
+// MARK: - Paywall Overlay Content Blocker
+struct ProGuardOverlay: ViewModifier {
+    let isPro: Bool
+    @Binding var showPaywall: Bool
+    
+    func body(content: Content) -> some View {
+        ZStack {
+            content
+                .allowsHitTesting(isPro) // Disables all interactions with the content if not pro
+            
+            if !isPro {
+                Color.white.opacity(0.001) // Transparent layer to catch the taps
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showPaywall = true
+                    }
             }
         }
     }
