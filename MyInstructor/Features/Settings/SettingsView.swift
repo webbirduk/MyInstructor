@@ -4,7 +4,6 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var subscriptionManager: SubscriptionManager
-    // Uses BackupManager.shared directly (Singleton)
     
     // Paywall State
     @State private var showPaywall = false
@@ -41,106 +40,15 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
+                proStatusSection
                 
-                // MARK: - App Preferences
-                Section("Preferences") {
-                    if isInstructor && !subscriptionManager.isPro {
-                        Button {
-                            showPaywall = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "crown.fill")
-                                    .foregroundColor(.yellow)
-                                Text("Upgrade to Pro")
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.primaryBlue)
-                            }
-                        }
-                    }
-                    
-                    Toggle("Enable Live Location", isOn: $isLocationSharingEnabled)
-                        .tint(.primaryBlue)
-                        .onChange(of: isLocationSharingEnabled) { newValue in
-                            if newValue { isPrivacyConsentShowing = true }
-                        }
-                    
-                    Toggle("Lesson Reminders", isOn: $receiveLessonReminders).tint(.primaryBlue)
-                    Toggle("Community Alerts", isOn: $receiveCommunityAlerts).tint(.primaryBlue)
-                }
+                preferencesSection
                 
-                // MARK: - Profile Privacy Settings
-                Section("Profile Privacy") {
-                    Toggle("Private Profile", isOn: $isProfilePrivate)
-                        .tint(.primaryBlue)
-                        .onChange(of: isProfilePrivate) { _ in savePrivacySettings() }
-                    
-                    if isProfilePrivate {
-                        Text("Only approved followers can see your posts and details.")
-                            .font(.caption).foregroundColor(.secondary)
-                    }
-                    
-                    Toggle("Hide Follower & Following Counts", isOn: $hideFollowers)
-                        .tint(.primaryBlue)
-                        .onChange(of: hideFollowers) { _ in savePrivacySettings() }
-                    
-                    Toggle("Hide Email Address", isOn: $hideEmail)
-                        .tint(.primaryBlue)
-                        .onChange(of: hideEmail) { _ in savePrivacySettings() }
-                }
+                privacySection
                 
-                // MARK: - Data Management
-                Section("Data Management") {
-                    Button {
-                        performExport()
-                    } label: {
-                        HStack {
-                            Label("Export Data", systemImage: "square.and.arrow.up")
-                            Spacer()
-                            if isExporting { ProgressView() }
-                        }
-                    }
-                    .foregroundColor(.primary)
-                    .disabled(isExporting)
-                    
-                    Button {
-                        showImportPicker = true
-                    } label: {
-                        HStack {
-                            Label("Import Data", systemImage: "square.and.arrow.down")
-                            Spacer()
-                            if isImporting { ProgressView() }
-                        }
-                    }
-                    .foregroundColor(.primary)
-                    .disabled(isImporting)
-                }
+                dataManagementSection
                 
-                // MARK: - Account Actions (Bottom)
-                Section {
-                    Button(role: .destructive) {
-                        try? authManager.logout()
-                    } label: {
-                        Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                    
-                    Button(role: .destructive) {
-                        password = "" // Reset password field
-                        showDeleteConfirmation = true
-                    } label: {
-                        if isDeleting {
-                            ProgressView().tint(.red)
-                        } else {
-                            Label("Delete Account", systemImage: "trash")
-                        }
-                    }
-                } header: {
-                    Text("Account")
-                } footer: {
-                    Text("Deleting your account will permanently remove your profile, community posts, and all associated personal data from our servers. This action cannot be undone.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 5)
-                }
+                accountActionsSection
             }
             .navigationTitle("Settings")
             .sheet(isPresented: $showPaywall) {
@@ -171,7 +79,6 @@ struct SettingsView: View {
                     self.hideEmail = user.hideEmail ?? false
                 }
             }
-            // Account Deletion Alert
             .alert("Delete Account", isPresented: $showDeleteConfirmation) {
                 SecureField("Enter Password", text: $password)
                 Button("Cancel", role: .cancel) { }
@@ -184,6 +91,152 @@ struct SettingsView: View {
         }
     }
     
+    // MARK: - Sub-Views (To prevent compiler complexity errors)
+    
+    private var proStatusSection: some View {
+        Section {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(authManager.user?.name ?? "Instructor")
+                        .font(.headline)
+                    Text(authManager.user?.email ?? "")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                if subscriptionManager.isPro {
+                    HStack(spacing: 5) {
+                        Image(systemName: "crown.fill")
+                            .foregroundColor(.yellow)
+                        Text("PRO")
+                            .fontWeight(.black)
+                            .font(.caption)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.primaryBlue.opacity(0.1))
+                    .cornerRadius(8)
+                } else if isInstructor {
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        Text("Upgrade")
+                            .font(.caption).bold()
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.primaryBlue)
+                            .cornerRadius(8)
+                    }
+                }
+            }
+            .padding(.vertical, 8)
+        }
+    }
+    
+    private var preferencesSection: some View {
+        Section("Preferences") {
+            Toggle("Enable Live Location", isOn: $isLocationSharingEnabled)
+                .tint(.primaryBlue)
+                .onChange(of: isLocationSharingEnabled) { newValue in
+                    if newValue { isPrivacyConsentShowing = true }
+                }
+            
+            Toggle("Lesson Reminders", isOn: $receiveLessonReminders).tint(.primaryBlue)
+            Toggle("Community Alerts", isOn: $receiveCommunityAlerts).tint(.primaryBlue)
+        }
+    }
+    
+    private var privacySection: some View {
+        Section("Profile Privacy") {
+            Toggle("Private Profile", isOn: $isProfilePrivate)
+                .tint(.primaryBlue)
+                .onChange(of: isProfilePrivate) { _ in savePrivacySettings() }
+            
+            if isProfilePrivate {
+                Text("Only approved followers can see your posts and details.")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            
+            Toggle("Hide Follower & Following Counts", isOn: $hideFollowers)
+                .tint(.primaryBlue)
+                .onChange(of: hideFollowers) { _ in savePrivacySettings() }
+            
+            Toggle("Hide Email Address", isOn: $hideEmail)
+                .tint(.primaryBlue)
+                .onChange(of: hideEmail) { _ in savePrivacySettings() }
+        }
+    }
+    
+    private var dataManagementSection: some View {
+        Section("Data Management") {
+            Button {
+                performExport()
+            } label: {
+                HStack {
+                    Label("Export Data", systemImage: "square.and.arrow.up")
+                    Spacer()
+                    if isExporting { ProgressView() }
+                }
+            }
+            .foregroundColor(.primary)
+            .disabled(isExporting)
+            
+            Button {
+                showImportPicker = true
+            } label: {
+                HStack {
+                    Label("Import Data", systemImage: "square.and.arrow.down")
+                    Spacer()
+                    if isImporting { ProgressView() }
+                }
+            }
+            .foregroundColor(.primary)
+            .disabled(isImporting)
+        }
+    }
+    
+    private var accountActionsSection: some View {
+        Section {
+            Button {
+                Task {
+                    await subscriptionManager.restorePurchases()
+                    alertMessage = "Purchase restoration complete."
+                    showAlert = true
+                }
+            } label: {
+                Label("Restore Purchases", systemImage: "arrow.clockwise.circle")
+            }
+            .foregroundColor(.primaryBlue)
+
+            Button(role: .destructive) {
+                try? authManager.logout()
+            } label: {
+                Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+            }
+            
+            Button(role: .destructive) {
+                password = ""
+                showDeleteConfirmation = true
+            } label: {
+                if isDeleting {
+                    ProgressView().tint(.red)
+                } else {
+                    Label("Delete Account", systemImage: "trash")
+                }
+            }
+        } header: {
+            Text("Account")
+        } footer: {
+            Text("Deleting your account will permanently remove your profile, community posts, and all associated personal data from our servers. This action cannot be undone.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 5)
+        }
+    }
+    
     // MARK: - Actions
     
     private func performExport() {
@@ -193,8 +246,6 @@ struct SettingsView: View {
         Task {
             do {
                 let data = try await BackupManager.shared.createBackupData(for: userID)
-                
-                // --- FIXED: Use a safe DateFormatter to avoid slashes in filename ---
                 let formatter = DateFormatter()
                 formatter.dateFormat = "yyyy-MM-dd_HH-mm"
                 let dateString = formatter.string(from: Date())
@@ -224,14 +275,11 @@ struct SettingsView: View {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
-            
-            // Security: access security scoped resource
             guard url.startAccessingSecurityScopedResource() else {
-                self.alertMessage = "Permission denied to access the file."
+                self.alertMessage = "Permission denied."
                 self.showAlert = true
                 return
             }
-            
             defer { url.stopAccessingSecurityScopedResource() }
             
             isImporting = true
@@ -251,7 +299,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            
         case .failure(let error):
             self.alertMessage = "Import error: \(error.localizedDescription)"
             self.showAlert = true
@@ -270,20 +317,19 @@ struct SettingsView: View {
     
     private func performAccountDeletion() {
         guard !password.isEmpty else { return }
-        
         isDeleting = true
         Task {
             do {
                 try await authManager.deleteAccount(password: password)
             } catch {
-                print("Error deleting account: \(error.localizedDescription)")
                 isDeleting = false
             }
         }
     }
 }
 
-// Helper for Share Sheet
+// MARK: - MISSING HELPERS restored
+
 struct ShareSheet: UIViewControllerRepresentable {
     var activityItems: [Any]
     var applicationActivities: [UIActivity]? = nil

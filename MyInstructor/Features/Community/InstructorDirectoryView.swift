@@ -135,7 +135,7 @@ struct InstructorDirectoryView: View {
                 // List View
                 if filteredInstructors.isEmpty {
                     Spacer()
-                    EmptyStateView(icon: "magnifyingglass", message: "No instructors found.")
+                    EmptyStateView(icon: "magnifyingglass", message: "No instructors found in your area yet. We are currently onboarding new instructors—check back soon!")
                     Spacer()
                 } else {
                     ScrollView {

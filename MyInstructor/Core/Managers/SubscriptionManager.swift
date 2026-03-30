@@ -110,7 +110,14 @@ class SubscriptionManager: ObservableObject {
     
     // MARK: - Restore Purchases
     func restorePurchases() async {
-        try? await AppStore.sync()
-        await updatePurchasedStatus()
+        self.isLoadingProducts = true // Show a spinner
+        do {
+            try await AppStore.sync()
+            await updatePurchasedStatus()
+            // Optional: Add a @Published 'showRestoreAlert' to tell the user it finished
+        } catch {
+            print("Restore failed: \(error)")
+        }
+        self.isLoadingProducts = false
     }
 }

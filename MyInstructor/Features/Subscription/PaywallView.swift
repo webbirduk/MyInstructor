@@ -12,6 +12,7 @@ struct PaywallView: View {
     let privacyURL = URL(string: "https://webbird.co.uk/privacy-policy-for-driving-instructor-logbook/")!
     
     var body: some View {
+        // Force light mode for the sheet content to ensure black text visibility
         ZStack(alignment: .top) {
             // 1. Top Background (Blue Branding Area)
             Color.primaryBlue
@@ -52,7 +53,6 @@ struct PaywallView: View {
                 // MARK: - Content Sheet (White Background)
                 ZStack {
                     Color.white
-                        // Uses your project's existing cornerRadius extension if available
                         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
                         .ignoresSafeArea(edges: .bottom)
                     
@@ -82,11 +82,21 @@ struct PaywallView: View {
                             
                             // 2. Plans List
                             VStack(spacing: 15) {
-                                Text("Choose a Plan")
-                                    .font(.title3).bold()
-                                    .foregroundColor(.black)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.leading, 5)
+                                // Updated header: Centered single row with text link for Restore
+                                HStack(spacing: 4) {
+                                    Text("Choose a Plan or")
+                                        .font(.headline)
+                                        .foregroundColor(.black)
+                                    
+                                    Button {
+                                        Task { await subscriptionManager.restorePurchases() }
+                                    } label: {
+                                        Text("Restore Purchases")
+                                            .font(.headline)
+                                            .foregroundColor(.primaryBlue)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
                                 
                                 if subscriptionManager.isLoadingProducts {
                                     ProgressView()
@@ -106,6 +116,7 @@ struct PaywallView: View {
                             
                             // 3. Footer / Restore / Legal
                             VStack(spacing: 20) {
+                                // Restored styled Restore Button at the bottom
                                 Button {
                                     Task { await subscriptionManager.restorePurchases() }
                                 } label: {
@@ -216,7 +227,6 @@ struct ModernPlanCard: View {
                         .lineLimit(1)
                 }
             }
-            // FIXED: Added padding top to center align the text visually
             .padding(.top, 15)
             
             Spacer()
