@@ -14,6 +14,9 @@ class AuthManager: ObservableObject {
     @Published var isLoading: Bool = true
     @Published var role: UserRole = .unselected
 
+    /// Injected after init so AuthManager can reset/refresh subscription state on auth changes.
+    weak var subscriptionManager: SubscriptionManager?
+
     private var authHandle: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
     private let usersCollection = "users"
@@ -69,6 +72,8 @@ class AuthManager: ObservableObject {
                 self.role = newUser.role
             }
             if !self.isAuthenticated { self.isAuthenticated = true }
+            // Re-check StoreKit entitlements for the newly signed-in user
+            subscriptionManager?.refreshForNewUser()
         } catch {
             print("!!! FetchUserData FAILED: \(error.localizedDescription)")
             self.isLoading = false
@@ -84,6 +89,8 @@ class AuthManager: ObservableObject {
         self.role = .unselected
         self.isLoading = false
         self.isCurrentlySigningUp = false
+        // Clear subscription status immediately so the next user starts fresh
+        subscriptionManager?.resetSubscriptionStatus()
     }
 
     func login(email: String, password: String) async throws {

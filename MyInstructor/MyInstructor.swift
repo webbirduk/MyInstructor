@@ -39,6 +39,10 @@ struct DrivingApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                // Link managers so auth sign-out/sign-in events reset subscription state
+                .onAppear {
+                    authManager.subscriptionManager = subscriptionManager
+                }
                 // Make managers available globally via the environment
                 .environmentObject(authManager)
                 .environmentObject(dataService)

@@ -31,6 +31,20 @@ class SubscriptionManager: ObservableObject {
         }
     }
     
+    // MARK: - Reset on Sign Out
+    /// Call this immediately when a user signs out so no subscription state bleeds to the next user.
+    func resetSubscriptionStatus() {
+        self.purchasedProductIDs = []
+    }
+    
+    // MARK: - Refresh on Sign In
+    /// Call this when a new user signs in to ensure entitlements are queried fresh for that user.
+    func refreshForNewUser() {
+        Task {
+            await updatePurchasedStatus()
+        }
+    }
+    
     deinit {
         updates?.cancel()
     }
