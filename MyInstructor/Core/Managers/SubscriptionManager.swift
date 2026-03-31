@@ -9,9 +9,11 @@ class SubscriptionManager: ObservableObject {
     @Published var purchasedProductIDs: Set<String> = []
     @Published var isLoadingProducts: Bool = false
     
-    // Computed property to check if user has access (Paid)
+    @Published var isManuallyPromoted: Bool = true
+
     var isPro: Bool {
-        return !purchasedProductIDs.isEmpty
+        // Returns true if THEY BOUGHT IT -OR- IF YOU MARKED THEM AS PRO IN DATABASE
+        return !purchasedProductIDs.isEmpty || isManuallyPromoted
     }
     
     // Configure your Product IDs here as set up in App Store Connect
